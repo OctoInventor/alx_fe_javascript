@@ -43,6 +43,7 @@ function showRandomQuote() {
     const randomQuote = quotes[randomIndex];
     const quoteDisplay = document.getElementById('quoteDisplay');
     quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
+    sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
 }
 
 // Function to create the form for adding new quotes
@@ -82,6 +83,7 @@ function addQuote() {
 
     if (newQuoteText && newQuoteCategory) {
         quotes.push({ text: newQuoteText, category: newQuoteCategory });
+        saveQuotes();
         document.getElementById('newQuoteText').value = '';
         document.getElementById('newQuoteCategory').value = '';
         alert('Quote added successfully!');
@@ -90,8 +92,62 @@ function addQuote() {
     }
 }
 
+// Function to load the last viewed quote from session storage
+function loadLastViewedQuote() {
+    const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');
+    if (lastViewedQuote) {
+        const quote = JSON.parse(lastViewedQuote);
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        quoteDisplay.innerHTML = `"${quote.text}" - ${quote.category}`;
+    }
+}
+
 // Initial setup
 document.addEventListener('DOMContentLoaded', () => {
     createAddQuoteForm();
     document.getElementById('showQuoteButton').addEventListener('click', showRandomQuote);
+    document.getElementById('exportQuotesButton').addEventListener('click', exportQuotes);
+    document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+    loadLastViewedQuote();
 });
+
+// Function to load quotes from local storage
+function loadQuotes() {
+    const storedQuotes = localStorage.getItem('quotes');
+    return storedQuotes ? JSON.parse(storedQuotes) : [];
+}
+
+// Function to save quotes to local storage
+function saveQuotes() {
+    localStorage.setItem('quotes', JSON.stringify(quotes));
+}
+
+// Array to store quote objects, initialized from local storage
+const quote = loadQuotes();
+
+// Function to export quotes to a JSON file
+function exportQuotes() {
+    const dataStr = JSON.stringify(quotes, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quotes.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Function to handle file upload and update quotes
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const uploadedQuotes = JSON.parse(e.target.result);
+            quotes.push(...uploadedQuotes);
+            saveQuotes();
+            alert('Quotes uploaded successfully!');
+        };
+        reader.readAsText(file);
+    }
+}
