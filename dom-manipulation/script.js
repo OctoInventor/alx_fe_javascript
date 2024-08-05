@@ -209,21 +209,21 @@ function updateCategorySelect(newCategory) {
     }
 }
 
-// Function to display a random quote from the selected category
-function showRandomQuote() {
+// Function to filter quotes based on the selected category
+function categoryFilter() {
     const categorySelect = document.getElementById('categorySelect');
     const selectedCategory = categorySelect.value;
+    localStorage.setItem('lastSelectedCategory', selectedCategory); // Save the selected category to local storage
     const filteredQuotes = quotes.filter(quote => quote.category === selectedCategory);
-    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
-    const randomQuote = filteredQuotes[randomIndex];
     const quoteDisplay = document.getElementById('quoteDisplay');
-    if (randomQuote) {
-        quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
-        sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
-    } else {
-        quoteDisplay.innerHTML = 'No quotes available for this category.';
-    }
+    quoteDisplay.innerHTML = ''; // Clear existing quotes
+    filteredQuotes.forEach(quote => {
+        const quoteElement = document.createElement('div');
+        quoteElement.textContent = `"${quote.text}" - ${quote.category}`;
+        quoteDisplay.appendChild(quoteElement);
+    });
 }
+
 
 // Function to fetch quotes from JSONPlaceholder
 async function fetchQuotes() {
