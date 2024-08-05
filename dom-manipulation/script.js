@@ -29,6 +29,7 @@ function addItem() {
 // Add event listener to the add button
 document.getElementById('addItemButton').addEventListener('click', addItem);
 
+
 // Array to store quote objects
 const quotes = [
     { text: "The only way to do great work is to love what you do.", category: "Motivation" },
@@ -126,7 +127,7 @@ function saveQuotes() {
 }
 
 // Array to store quote objects, initialized from local storage
-const quote = loadQuotes();
+//const quotes = loadQuotes();
 
 // Function to export quotes to a JSON file
 function exportQuotes() {
@@ -205,4 +206,16 @@ function filterQuotes() {
      categorySelect.value = lastSelectedCategory;
      filterQuotes(); // Update the displayed quotes based on the restored category
  }
+
+ // Function to update the category dropdown if a new category is introduced
+function updateCategorySelect(newCategory) {
+    const categorySelect = document.getElementById('categorySelect');
+    const existingOptions = Array.from(categorySelect.options).map(option => option.value);
+    if (!existingOptions.includes(newCategory)) {
+        const option = document.createElement('option');
+        option.value = newCategory;
+        option.textContent = newCategory;
+        categorySelect.appendChild(option);
+    }
+}
 
