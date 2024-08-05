@@ -83,9 +83,11 @@ function addQuote() {
     const newQuoteCategory = document.getElementById('newQuoteCategory').value;
 
     if (newQuoteText && newQuoteCategory) {
-        quotes.push({ text: newQuoteText, category: newQuoteCategory });
+        const newQuote = { text: newQuoteText, category: newQuoteCategory };
+        quotes.push(newQuote);
         saveQuotes();
-        populateCategorySelect(); // Update the category dropdown
+        updateCategorySelect(newQuoteCategory); // Update the category dropdown if a new category is introduced
+        postQuote(newQuote); // Post the new quote to JSONPlaceholder
         document.getElementById('newQuoteText').value = '';
         document.getElementById('newQuoteCategory').value = '';
         alert('Quote added successfully!');
@@ -111,8 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportQuotesButton').addEventListener('click', exportQuotes);
     document.getElementById('fileInput').addEventListener('change', handleFileUpload);
     document.getElementById('categorySelect').addEventListener('change', filterQuotes);
+    document.getElementById('fetchQuotesButton').addEventListener('click', fetchQuotes);
     populateCategorySelect();
     loadLastViewedQuote();
+    startPeriodicFetching(60000); // Fetch new quotes every 60 seconds
 });
 
 // Function to load quotes from local storage
@@ -156,22 +160,6 @@ function handleFileUpload(event) {
     }
 }
 
-// Function to display a random quote from the selected category
-function showRandomQuote() {
-    const categorySelect = document.getElementById('categorySelect');
-    const selectedCategory = categorySelect.value;
-    const filteredQuotes = quotes.filter(quote => quote.category === selectedCategory);
-    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
-    const randomQuote = filteredQuotes[randomIndex];
-    const quoteDisplay = document.getElementById('quoteDisplay');
-    if (randomQuote) {
-        quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
-        sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
-    } else {
-        quoteDisplay.innerHTML = 'No quotes available for this category.';
-    }
-}
-
 // Function to populate the category dropdown
 function populateCategorySelect() {
     const categorySelect = document.getElementById('categorySelect');
@@ -207,6 +195,8 @@ function filterQuotes() {
      filterQuotes(); // Update the displayed quotes based on the restored category
  }
 
+
+
  // Function to update the category dropdown if a new category is introduced
 function updateCategorySelect(newCategory) {
     const categorySelect = document.getElementById('categorySelect');
@@ -219,3 +209,90 @@ function updateCategorySelect(newCategory) {
     }
 }
 
+// Function to display a random quote from the selected category
+function showRandomQuote() {
+    const categorySelect = document.getElementById('categorySelect');
+    const selectedCategory = categorySelect.value;
+    const filteredQuotes = quotes.filter(quote => quote.category === selectedCategory);
+    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+    const randomQuote = filteredQuotes[randomIndex];
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    if (randomQuote) {
+        quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
+        sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
+    } else {
+        quoteDisplay.innerHTML = 'No quotes available for this category.';
+    }
+}
+
+// Function to fetch quotes from JSONPlaceholder
+async function fetchQuotes() {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+        const data = await response.json();
+        // Assuming each post has a title as the quote text and body as the category
+        const fetchedQuotes = data.map(post => ({
+            text: post.title,
+            category: post.body
+        }));
+        quotes.push(...fetchedQuotes);
+        saveQuotes();
+        populateCategorySelect();
+        alert('Quotes fetched successfully!');
+    } catch (error) {
+        console.error('Error fetching quotes:', error);
+        alert('Failed to fetch quotes.');
+    }
+}
+
+// Function to post a new quote to JSONPlaceholder
+async function postQuote(newQuote) {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newQuote)
+        });
+        const data = await response.json();
+        console.log('Posted quote:', data);
+        alert('Quote posted successfully!');
+    } catch (error) {
+        console.error('Error posting quote:', error);
+        alert('Failed to post quote.');
+    }
+}
+
+// Function to periodically fetch new quotes
+function startPeriodicFetching(interval) {
+    setInterval(fetchQuotes, interval);
+}
+
+// Function to update local storage with new quotes
+function updateLocalStorage(newQuotes) {
+    const existingQuotes = loadQuotes();
+    const updatedQuotes = [...existingQuotes, ...newQuotes];
+    localStorage.setItem('quotes', JSON.stringify(updatedQuotes));
+    return updatedQuotes;
+}
+
+// Function to periodically check for new quotes and update local storage
+async function checkForNewQuotes() {
+    const newQuotes = await fetchQuotes();
+    if (newQuotes.length > 0) {
+        const updatedQuotes = updateLocalStorage(newQuotes);
+        quotes.length = 0; // Clear the existing quotes array
+        quotes.push(...updatedQuotes); // Update the quotes array with new quotes
+        populateCategorySelect(); // Update the category dropdown
+        alert('New quotes fetched and updated successfully!');
+    }
+}
+
+// Function to update local storage with new quotes, resolving conflicts by taking server's data precedence
+function updateLocalStorageWithConflictResolution(newQuotes) {
+    const existingQuotes = loadQuotes();
+    const updatedQuotes = newQuotes; // Server's data takes precedence
+    localStorage.setItem('quotes', JSON.stringify(updatedQuotes));
+    return updatedQuotes;
+}
