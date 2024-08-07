@@ -1,35 +1,3 @@
-// Function to add a new item to the list
-function addItem() {
-    // Get the value from the input field
-    const input = document.getElementById('itemInput');
-    const itemText = input.value;
-
-    // Create a new list item element
-    const newItem = document.createElement('li');
-    newItem.textContent = itemText;
-
-    // Create a remove button for the new item
-    const removeButton = document.createElement('button');
-    removeButton.textContent = 'Remove';
-    removeButton.onclick = function() {
-        newItem.remove();
-    };
-
-    // Append the remove button to the new item
-    newItem.appendChild(removeButton);
-
-    // Append the new item to the list
-    const list = document.getElementById('itemList');
-    list.appendChild(newItem);
-
-    // Clear the input field
-    input.value = '';
-}
-
-// Add event listener to the add button
-document.getElementById('addItemButton').addEventListener('click', addItem);
-
-
 // Array to store quote objects
 const quotes = [
     { text: "The only way to do great work is to love what you do.", category: "Motivation" },
@@ -86,7 +54,7 @@ function addQuote() {
         const newQuote = { text: newQuoteText, category: newQuoteCategory };
         quotes.push(newQuote);
         saveQuotes();
-        populateCategorySelect(newQuoteCategory); // Update the category dropdown if a new category is introduced
+        populateCategories(); // Update the category dropdown if a new category is introduced
         postQuote(newQuote); // Post the new quote to JSONPlaceholder
         document.getElementById('newQuoteText').value = '';
         document.getElementById('newQuoteCategory').value = '';
@@ -107,23 +75,26 @@ function loadLastViewedQuote() {
 }
 
 // Function to populate the category dropdown
-function populateCategorySelect(newCategory) {
-    const categorySelect = document.getElementById('categorySelect');
-    const existingOptions = Array.from(categorySelect.options).map(option => option.value);
-    if (!existingOptions.includes(newCategory)) {
+function populateCategories() {
+    const categorySelect = document.getElementById('categoryFilter');
+    const categories = ['all', ...new Set(quotes.map(quote => quote.category))];
+    categorySelect.innerHTML = ''; // Clear existing options
+    categories.forEach(category => {
         const option = document.createElement('option');
-        option.value = newCategory;
-        option.textContent = newCategory;
+        option.value = category;
+        option.textContent = category;
         categorySelect.appendChild(option);
-    }
+    });
 }
 
 // Function to filter quotes based on the selected category
 function filterQuotes() {
-    const categorySelect = document.getElementById('categorySelect');
+    const categorySelect = document.getElementById('categoryFilter');
     const selectedCategory = categorySelect.value;
     localStorage.setItem('lastSelectedCategory', selectedCategory); // Save the selected category to local storage
-    const filteredQuotes = quotes.filter(quote => quote.category === selectedCategory);
+    const filteredQuotes = selectedCategory === 'all' 
+        ? quotes 
+        : quotes.filter(quote => quote.category === selectedCategory);
     const quoteDisplay = document.getElementById('quoteDisplay');
     quoteDisplay.innerHTML = ''; // Clear existing quotes
     filteredQuotes.forEach(quote => {
@@ -139,17 +110,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('showQuoteButton').addEventListener('click', showRandomQuote);
     document.getElementById('exportQuotesButton').addEventListener('click', exportQuotes);
     document.getElementById('fileInput').addEventListener('change', handleFileUpload);
-    document.getElementById('categorySelect').addEventListener('change', categoryFilter);
     document.getElementById('fetchQuotesButton').addEventListener('click', fetchQuotes);
-    populateCategorySelect();
+    populateCategories();
     loadLastViewedQuote();
     startPeriodicFetching(60000); // Fetch new quotes every 60 seconds
 
     // Restore the last selected category from local storage
     const lastSelectedCategory = localStorage.getItem('lastSelectedCategory');
     if (lastSelectedCategory) {
-        document.getElementById('categorySelect').value = lastSelectedCategory;
-        categoryFilter(); // Update the displayed quotes based on the restored category
+        document.getElementById('categoryFilter').value = lastSelectedCategory;
+        filterQuotes(); // Update the displayed quotes based on the restored category
     }
 });
 
@@ -163,9 +133,6 @@ function loadQuotes() {
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
 }
-
-// Array to store quote objects, initialized from local storage
-// const quotes = loadQuotes();
 
 // Function to export quotes to a JSON file
 function exportQuotes() {
@@ -206,7 +173,7 @@ async function fetchQuotes() {
         }));
         quotes.push(...fetchedQuotes);
         saveQuotes();
-        populateCategorySelect();
+        populateCategories();
         alert('Quotes fetched successfully!');
     } catch (error) {
         console.error('Error fetching quotes:', error);
@@ -246,6 +213,14 @@ function updateLocalStorage(newQuotes) {
     return updatedQuotes;
 }
 
+// Function to update local storage with new quotes, resolving conflicts by taking server's data precedence
+function updateLocalStorageWithConflictResolution(newQuotes) {
+    const existingQuotes = loadQuotes();
+    const updatedQuotes = newQuotes; // Server's data takes precedence
+    localStorage.setItem('quotes', JSON.stringify(updatedQuotes));
+    return updatedQuotes;
+}
+
 // Function to periodically check for new quotes and update local storage
 async function checkForNewQuotes() {
     const newQuotes = await fetchQuotes();
@@ -256,4 +231,9 @@ async function checkForNewQuotes() {
         populateCategories(); // Update the category dropdown
         showNotification('New quotes fetched and updated successfully!', 'success');
     }
+}
+
+// Helper function to show notifications
+function showNotification(message, type) {
+    // Implementation for showing notifications
 }
