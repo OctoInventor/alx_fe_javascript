@@ -119,7 +119,7 @@ function populateCategorySelect(newCategory) {
 }
 
 // Function to filter quotes based on the selected category
-function categoryFilter() {
+function filterQuotes() {
     const categorySelect = document.getElementById('categorySelect');
     const selectedCategory = categorySelect.value;
     localStorage.setItem('lastSelectedCategory', selectedCategory); // Save the selected category to local storage
