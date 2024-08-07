@@ -205,17 +205,8 @@ function startPeriodicFetching(interval) {
     setInterval(fetchQuotes, interval);
 }
 
-// Function to update local storage with new quotes
-function updateLocalStorage(newQuotes) {
-    const existingQuotes = loadQuotes();
-    const updatedQuotes = [...existingQuotes, ...newQuotes];
-    localStorage.setItem('quotes', JSON.stringify(updatedQuotes));
-    return updatedQuotes;
-}
-
 // Function to update local storage with new quotes, resolving conflicts by taking server's data precedence
 function updateLocalStorageWithConflictResolution(newQuotes) {
-    const existingQuotes = loadQuotes();
     const updatedQuotes = newQuotes; // Server's data takes precedence
     localStorage.setItem('quotes', JSON.stringify(updatedQuotes));
     return updatedQuotes;
@@ -235,5 +226,11 @@ async function checkForNewQuotes() {
 
 // Helper function to show notifications
 function showNotification(message, type) {
-    // Implementation for showing notifications
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
 }
