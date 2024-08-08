@@ -162,7 +162,7 @@ function handleFileUpload(event) {
 }
 
 // Function to fetch quotes from JSONPlaceholder
-async function fetchQuotes() {
+async function fetchQuotesFromServer() {
     try {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
         const data = await response.json();
@@ -171,13 +171,11 @@ async function fetchQuotes() {
             text: post.title,
             category: post.body
         }));
-        quotes.push(...fetchedQuotes);
-        saveQuotes();
-        populateCategories();
-        alert('Quotes fetched successfully!');
+        return fetchedQuotes;
     } catch (error) {
         console.error('Error fetching quotes:', error);
         alert('Failed to fetch quotes.');
+        return [];
     }
 }
 
@@ -202,7 +200,7 @@ async function postQuote(newQuote) {
 
 // Function to periodically fetch new quotes
 function startPeriodicFetching(interval) {
-    setInterval(fetchQuotes, interval);
+    setInterval(checkForNewQuotes, interval);
 }
 
 // Function to update local storage with new quotes, resolving conflicts by taking server's data precedence
@@ -214,7 +212,7 @@ function updateLocalStorageWithConflictResolution(newQuotes) {
 
 // Function to periodically check for new quotes and update local storage
 async function checkForNewQuotes() {
-    const newQuotes = await fetchQuotes();
+    const newQuotes = await fetchQuotesFromServer();
     if (newQuotes.length > 0) {
         const updatedQuotes = updateLocalStorageWithConflictResolution(newQuotes);
         quotes.length = 0; // Clear the existing quotes array
