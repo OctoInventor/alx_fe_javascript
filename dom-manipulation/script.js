@@ -200,7 +200,7 @@ async function postQuote(newQuote) {
 
 // Function to periodically fetch new quotes
 function startPeriodicFetching(interval) {
-    setInterval(checkForNewQuotes, interval);
+    setInterval(syncQuotes, interval);
 }
 
 // Function to update local storage with new quotes, resolving conflicts by taking server's data precedence
@@ -211,7 +211,7 @@ function updateLocalStorageWithConflictResolution(newQuotes) {
 }
 
 // Function to periodically check for new quotes and update local storage
-async function checkForNewQuotes() {
+async function syncQuotes() {
     const newQuotes = await fetchQuotesFromServer();
     if (newQuotes.length > 0) {
         const updatedQuotes = updateLocalStorageWithConflictResolution(newQuotes);
