@@ -218,7 +218,7 @@ async function syncQuotes() {
         quotes.length = 0; // Clear the existing quotes array
         quotes.push(...updatedQuotes); // Update the quotes array with new quotes
         populateCategories(); // Update the category dropdown
-        showNotification('New quotes fetched and updated successfully!', 'success');
+        showNotification('Quotes synced with server!', 'success');
     }
 }
 
